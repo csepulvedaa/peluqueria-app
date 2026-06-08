@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Peluquería App
 
-## Getting Started
+A mobile-first PWA for tracking hairdressing services and calculating monthly salary — built to replace a manual Excel spreadsheet.
 
-First, run the development server:
+**Live:** [peluqueria-app-one.vercel.app](https://peluqueria-app-one.vercel.app)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Features
+
+- **Monthly service log** — add services with name, date, type, and price
+- **Automatic salary calculation** — Corte (50%), Color (45%), Tratamiento (45%)
+- **IVA toggle** — switch between earnings with and without Chilean VAT (19%)
+- **PWA** — installable on iOS and Android, works offline for last-viewed data
+- **Magic link auth** — single-user, login via email link, session persists across devices
+
+## Stack
+
+| Layer | Tech |
+|---|---|
+| Framework | Next.js 16 (App Router, Turbopack) |
+| Database + Auth | Supabase (Postgres + magic link) |
+| Hosting | Vercel |
+| UI | shadcn/ui (base-ui) + Tailwind CSS v4 |
+| PWA | Manual service worker (`public/sw.js`) |
+
+## Business Logic
+
+```
+Chilean VAT = 19%
+
+Per service:
+  Earnings with VAT    = price × percentage
+  Earnings without VAT = (price / 1.19) × percentage
+
+Monthly summary:
+  Total services = Σ price
+  Total ex-VAT   = Σ (price / 1.19)
+  VAT amount     = Total services − Total ex-VAT
+  My earnings    = Σ earnings (based on active IVA toggle)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create `.env.local`:
 
-## Learn More
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 
-To learn more about Next.js, take a look at the following resources:
+# Local dev bypass — skips auth and uses a local JSON file for storage
+DEV_BYPASS_AUTH=true
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Database
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Run `supabase/migrations/0001_init.sql` in your Supabase SQL Editor to create the `services` table with RLS policies.
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+All changes go through pull requests. Merging a PR into `main` triggers an automatic production deployment on Vercel via GitHub Actions.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **PR opened/updated** → preview deployment, URL posted as a PR comment
+- **Merged to `main`** → production deployment to [peluqueria-app-one.vercel.app](https://peluqueria-app-one.vercel.app)
+
+### Required GitHub Secrets
+
+Add these in **Settings → Secrets and variables → Actions**:
+
+| Secret | Value |
+|---|---|
+| `VERCEL_TOKEN` | Create at [vercel.com/account/tokens](https://vercel.com/account/tokens) |
+| `VERCEL_ORG_ID` | `team_kBYz8XYYSHBPjelA7p9UDoeG` |
+| `VERCEL_PROJECT_ID` | `prj_T2GsFmfqkRy75Itj9nQBA7uT5PsE` |
+
+## License
+
+MIT
