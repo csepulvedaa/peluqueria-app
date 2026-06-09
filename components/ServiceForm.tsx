@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,10 +22,12 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Trash2 } from 'lucide-react'
 
+type ActionResult = { redirectTo: string } | { error: string }
+
 interface Props {
-  action: (formData: FormData) => Promise<void>
+  action: (formData: FormData) => Promise<ActionResult>
   defaultValues?: Service
-  deleteAction?: () => Promise<void>
+  deleteAction?: () => Promise<ActionResult>
 }
 
 function todayISO(): string {
@@ -32,13 +35,22 @@ function todayISO(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-export function ServiceForm({ action, defaultValues, deleteAction }: Props) {
+export function ServiceForm({ action, deleteAction, defaultValues }: Props) {
+  const router = useRouter()
   const [nombre, setNombre] = useState(defaultValues?.nombre ?? '')
   const [fecha, setFecha] = useState(defaultValues?.fecha ?? todayISO())
   const [tipo, setTipo] = useState<TipoServicio>(defaultValues?.tipo ?? 'Corte')
   const [valor, setValor] = useState(defaultValues?.valor?.toString() ?? '')
   const [isPending, startTransition] = useTransition()
   const [isDeleting, startDeleting] = useTransition()
+
+  function handleResult(result: ActionResult) {
+    if ('error' in result) {
+      toast.error(result.error)
+    } else {
+      router.push(result.redirectTo)
+    }
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -47,29 +59,16 @@ export function ServiceForm({ action, defaultValues, deleteAction }: Props) {
     fd.set('fecha', fecha)
     fd.set('tipo', tipo)
     fd.set('valor', valor.replace(/\D/g, ''))
-    startTransition(async () => {
-      try {
-        await action(fd)
-      } catch {
-        toast.error('No se pudo guardar el servicio')
-      }
-    })
+    startTransition(async () => handleResult(await action(fd)))
   }
 
   function handleValorChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const raw = e.target.value.replace(/\D/g, '')
-    setValor(raw)
+    setValor(e.target.value.replace(/\D/g, ''))
   }
 
   function handleDelete() {
     if (!deleteAction) return
-    startDeleting(async () => {
-      try {
-        await deleteAction()
-      } catch {
-        toast.error('No se pudo eliminar el servicio')
-      }
-    })
+    startDeleting(async () => handleResult(await deleteAction()))
   }
 
   const valorNum = parseInt(valor || '0')
@@ -97,16 +96,16 @@ export function ServiceForm({ action, defaultValues, deleteAction }: Props) {
         </datalist>
       </div>
 
-      {/* Fecha */}
+      {/* Fecha — native input to avoid base-ui date handling issues */}
       <div className="space-y-2">
         <Label htmlFor="fecha">Fecha</Label>
-        <Input
+        <input
           id="fecha"
           type="date"
           value={fecha}
           onChange={(e) => setFecha(e.target.value)}
           required
-          className="h-12 text-base"
+          className="h-12 w-full rounded-lg border border-input bg-transparent px-3 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
       </div>
 
@@ -157,11 +156,7 @@ export function ServiceForm({ action, defaultValues, deleteAction }: Props) {
       </div>
 
       {/* Submit */}
-      <Button
-        type="submit"
-        className="w-full h-12 text-base"
-        disabled={isPending || isDeleting}
-      >
+      <Button type="submit" className="w-full h-12 text-base" disabled={isPending || isDeleting}>
         {isPending ? 'Guardando...' : defaultValues ? 'Guardar cambios' : 'Agregar servicio'}
       </Button>
 
@@ -179,8 +174,8 @@ export function ServiceForm({ action, defaultValues, deleteAction }: Props) {
             <AlertDialogHeader>
               <AlertDialogTitle>¿Eliminar este servicio?</AlertDialogTitle>
               <AlertDialogDescription>
-                Se eliminará <strong>{defaultValues?.nombre}</strong> del{' '}
-                {defaultValues?.fecha}. Esta acción no se puede deshacer.
+                Se eliminará <strong>{defaultValues?.nombre}</strong> del {defaultValues?.fecha}.
+                Esta acción no se puede deshacer.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

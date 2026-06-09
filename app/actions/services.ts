@@ -1,9 +1,8 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { devStorage, DEV_USER_ID } from '@/lib/dev-storage'
+import { devStorage } from '@/lib/dev-storage'
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
 const DEV = process.env.DEV_BYPASS_AUTH === 'true'
@@ -15,62 +14,64 @@ const ServiceSchema = z.object({
   valor: z.coerce.number().int().min(0),
 })
 
+type ActionResult = { redirectTo: string } | { error: string }
+
 function yyyymmFromDate(fecha: string): string {
-  return fecha.replace(/-/g, '').slice(0, 6)
+  return fecha.slice(0, 7).replace('-', '')
 }
 
-export async function createService(formData: FormData) {
+export async function createService(formData: FormData): Promise<ActionResult> {
   const parsed = ServiceSchema.safeParse(Object.fromEntries(formData))
-  if (!parsed.success) throw new Error('Datos inválidos')
+  if (!parsed.success) return { error: 'Datos inválidos' }
 
   if (DEV) {
     devStorage.insert(parsed.data)
   } else {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('No autenticado')
+    if (!user) return { error: 'No autenticado' }
     const { error } = await supabase.from('services').insert({ ...parsed.data, user_id: user.id })
-    if (error) throw new Error(error.message)
+    if (error) return { error: error.message }
   }
 
   const yyyymm = yyyymmFromDate(parsed.data.fecha)
   revalidatePath(`/mes/${yyyymm}`)
-  redirect(`/mes/${yyyymm}`)
+  return { redirectTo: `/mes/${yyyymm}` }
 }
 
-export async function updateService(id: string, formData: FormData) {
+export async function updateService(id: string, formData: FormData): Promise<ActionResult> {
   const parsed = ServiceSchema.safeParse(Object.fromEntries(formData))
-  if (!parsed.success) throw new Error('Datos inválidos')
+  if (!parsed.success) return { error: 'Datos inválidos' }
 
   if (DEV) {
     devStorage.update(id, parsed.data)
   } else {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('No autenticado')
+    if (!user) return { error: 'No autenticado' }
     const { error } = await supabase
       .from('services').update(parsed.data).eq('id', id).eq('user_id', user.id)
-    if (error) throw new Error(error.message)
+    if (error) return { error: error.message }
   }
 
   const yyyymm = yyyymmFromDate(parsed.data.fecha)
   revalidatePath(`/mes/${yyyymm}`)
-  redirect(`/mes/${yyyymm}`)
+  return { redirectTo: `/mes/${yyyymm}` }
 }
 
-export async function deleteService(id: string, fecha: string) {
+export async function deleteService(id: string, fecha: string): Promise<ActionResult> {
   if (DEV) {
     devStorage.delete(id)
   } else {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('No autenticado')
+    if (!user) return { error: 'No autenticado' }
     const { error } = await supabase
       .from('services').delete().eq('id', id).eq('user_id', user.id)
-    if (error) throw new Error(error.message)
+    if (error) return { error: error.message }
   }
 
-  const yyyymm = fecha.replace(/-/g, '').slice(0, 6)
+  const yyyymm = yyyymmFromDate(fecha)
   revalidatePath(`/mes/${yyyymm}`)
-  redirect(`/mes/${yyyymm}`)
+  return { redirectTo: `/mes/${yyyymm}` }
 }
