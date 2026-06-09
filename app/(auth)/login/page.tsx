@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,9 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
-  const [sent, setSent] = useState(false)
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const router = useRouter()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -19,17 +21,15 @@ export default function LoginPage() {
     setError('')
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-    })
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
-      setError('No se pudo enviar el link. Intenta de nuevo.')
+      setError('Correo o contraseña incorrectos.')
+      setLoading(false)
     } else {
-      setSent(true)
+      router.push('/')
+      router.refresh()
     }
-    setLoading(false)
   }
 
   return (
@@ -38,38 +38,41 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <div className="text-4xl mb-2">✂️</div>
           <CardTitle className="text-2xl">Mis Servicios</CardTitle>
-          <CardDescription>Ingresa tu correo para acceder</CardDescription>
+          <CardDescription>Ingresa tu correo y contraseña</CardDescription>
         </CardHeader>
         <CardContent>
-          {sent ? (
-            <div className="text-center space-y-2">
-              <div className="text-3xl">📧</div>
-              <p className="font-medium">¡Link enviado!</p>
-              <p className="text-sm text-muted-foreground">
-                Revisa tu correo <strong>{email}</strong> y toca el link para ingresar.
-              </p>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Correo electrónico</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="tu@correo.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                className="h-12 text-base"
+              />
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Correo electrónico</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="tu@correo.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  className="h-12 text-base"
-                />
-              </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
-                {loading ? 'Enviando...' : 'Enviar link de acceso'}
-              </Button>
-            </form>
-          )}
+            <div className="space-y-2">
+              <Label htmlFor="password">Contraseña</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                className="h-12 text-base"
+              />
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+              {loading ? 'Ingresando...' : 'Ingresar'}
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>
