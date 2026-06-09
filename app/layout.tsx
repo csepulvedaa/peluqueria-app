@@ -4,7 +4,7 @@ import './globals.css'
 import { IvaProvider } from '@/providers/IvaProvider'
 import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar'
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-geist' })
+const geist = Geist({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Mis Servicios',
@@ -26,11 +26,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es-CL" className={geist.variable}>
+    <html lang="es-CL" className={geist.className}>
       <head>
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
       </head>
-      <body className="min-h-screen bg-background font-sans antialiased">
+      <body className="min-h-screen bg-background antialiased">
         <IvaProvider>
           <ServiceWorkerRegistrar />
           {children}

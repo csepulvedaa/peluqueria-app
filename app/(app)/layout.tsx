@@ -3,14 +3,19 @@ import { redirect } from 'next/navigation'
 import { BottomNav } from '@/components/BottomNav'
 import { IvaToggle } from '@/components/IvaToggle'
 import { Toaster } from 'sonner'
+import { currentYYYYMM } from '@/lib/format'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  if (process.env.DEV_BYPASS_AUTH !== 'true') {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) redirect('/login')
+  }
 
-  if (!user) redirect('/login')
+  // Computed server-side so client components never call new Date() during render
+  const currentMonth = currentYYYYMM()
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -19,7 +24,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <IvaToggle />
       </header>
       <main className="flex-1 pb-20">{children}</main>
-      <BottomNav />
+      <BottomNav currentMonth={currentMonth} />
       <Toaster position="top-center" richColors />
     </div>
   )

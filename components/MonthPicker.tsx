@@ -1,16 +1,17 @@
 'use client'
 
 import Link from 'next/link'
-import { prevMonth, nextMonth, currentYYYYMM } from '@/lib/format'
+import { prevMonth, nextMonth } from '@/lib/format'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface Props {
   yyyymm: string
   label: string
+  currentMonth: string
 }
 
-export function MonthPicker({ yyyymm, label }: Props) {
-  const isCurrentMonth = yyyymm === currentYYYYMM()
+export function MonthPicker({ yyyymm, label, currentMonth }: Props) {
+  const isCurrentMonth = yyyymm === currentMonth
 
   return (
     <div className="flex items-center justify-between">

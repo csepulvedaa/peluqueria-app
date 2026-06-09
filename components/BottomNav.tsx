@@ -2,15 +2,18 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { currentYYYYMM } from '@/lib/format'
 import { CalendarDays, Plus, Settings } from 'lucide-react'
 
-export function BottomNav() {
+interface Props {
+  currentMonth: string
+}
+
+export function BottomNav({ currentMonth }: Props) {
   const pathname = usePathname()
 
   const navItems = [
     {
-      href: `/mes/${currentYYYYMM()}`,
+      href: `/mes/${currentMonth}`,
       label: 'Mes',
       icon: CalendarDays,
       active: pathname.startsWith('/mes'),
@@ -35,7 +38,7 @@ export function BottomNav() {
       <div className="flex items-center justify-around max-w-lg mx-auto">
         {navItems.map(({ href, label, icon: Icon, active, primary }) => (
           <Link
-            key={href}
+            key={label}
             href={href}
             className={`flex flex-col items-center gap-1 py-3 px-6 min-w-[4rem] transition-colors ${
               primary
