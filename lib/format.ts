@@ -10,22 +10,25 @@ export function formatCLP(value: number): string {
 
 export function formatDate(dateStr: string): string {
   const [year, month, day] = dateStr.split('-').map(Number)
+  // Use noon to avoid UTC→local offset wrapping to previous/next day
   return new Intl.DateTimeFormat('es-CL', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     timeZone: 'America/Santiago',
-  }).format(new Date(year, month - 1, day))
+  }).format(new Date(year, month - 1, day, 12, 0, 0))
 }
 
 export function formatMonthLabel(yyyymm: string): string {
   const year = parseInt(yyyymm.slice(0, 4))
   const month = parseInt(yyyymm.slice(4, 6)) - 1
+  // Use noon (12:00) to avoid UTC→Santiago offset wrapping midnight to previous day
+  // e.g. June 1 00:00 UTC = May 31 20:00 Santiago → would show "Mayo"
   return new Intl.DateTimeFormat('es-CL', {
     month: 'long',
     year: 'numeric',
     timeZone: 'America/Santiago',
-  }).format(new Date(year, month, 1))
+  }).format(new Date(year, month, 1, 12, 0, 0))
 }
 
 export function currentYYYYMM(): string {
