@@ -112,7 +112,7 @@ export function ServiceForm({ action, deleteAction, defaultValues }: Props) {
       {/* Tipo de servicio */}
       <div className="space-y-2">
         <Label>Tipo de servicio</Label>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {TIPOS_SERVICIO.map((t) => (
             <button
               key={t}

@@ -10,7 +10,7 @@ const DEV = process.env.DEV_BYPASS_AUTH === 'true'
 const ServiceSchema = z.object({
   nombre: z.string().min(1).max(100),
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  tipo: z.enum(['Corte', 'Color', 'Tratamiento'] as const),
+  tipo: z.enum(['Corte', 'Color', 'Tratamiento', 'Brushing'] as const),
   valor: z.coerce.number().int().min(0),
 })
 
