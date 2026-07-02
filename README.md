@@ -7,7 +7,7 @@ A mobile-first PWA for tracking hairdressing services and calculating monthly sa
 ## Features
 
 - **Monthly service log** — add services with name, date, type, and price
-- **Automatic salary calculation** — Corte (50%), Color (45%), Tratamiento (45%)
+- **Automatic salary calculation** — Corte (50%), Color (47%), Tratamiento (45%), Brushing (50%)
 - **IVA toggle** — switch between earnings with and without Chilean VAT (19%)
 - **PWA** — installable on iOS and Android, works offline for last-viewed data
 - **Magic link auth** — single-user, login via email link, session persists across devices
@@ -26,6 +26,12 @@ A mobile-first PWA for tracking hairdressing services and calculating monthly sa
 
 ```
 Chilean VAT = 19%
+
+Service percentages:
+  Corte      → 50%
+  Color      → 47%
+  Tratamiento → 45%
+  Brushing   → 50%
 
 Per service:
   Earnings with VAT    = price × percentage
@@ -57,7 +63,10 @@ DEV_BYPASS_AUTH=true
 
 ### Database
 
-Run `supabase/migrations/0001_init.sql` in your Supabase SQL Editor to create the `services` table with RLS policies.
+Run migrations in order in your Supabase SQL Editor:
+
+1. `supabase/migrations/0001_init.sql` — creates the `services` table with RLS policies
+2. `supabase/migrations/0002_add_brushing.sql` — adds `Brushing` to the `tipo_servicio` enum
 
 ## Deployment
 
